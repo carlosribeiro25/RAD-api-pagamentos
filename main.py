@@ -38,12 +38,23 @@ class SolicitacaoPagamento(BaseModel):
     id_pedido: int = Field(..., description="Identificador numérico do pedido", gt=0)
     valor_total: float = Field(..., description="Valor total da tansação financeira", gt=0)
     metodo_pagamento: str = Field(..., description="Forma de pagamento utilizada EX(: Cartao, Pix, Dinheiro)")
+    
+
+    
 
 @app.post("/pagamentos", status_code=status.HTTP_201_CREATED, summary="Registrar e processar um pagamento")
+
+
 def processar_pagamento(pagamento:SolicitacaoPagamento) -> Dict[str, Any]:
     id_pedido = pagamento.id_pedido
     valor_total = pagamento.valor_total
     metodo_pagamento = pagamento.metodo_pagamento
+    
+    # 1. Implementação da regra de Incentivo Financeiro (Desconto 10% no pagamento por Pix):
+    if pagamento.metodo_pagamento.lower() == 'pix':
+        valor_total = valor_total - (0.10 * valor_total)   
+        
+        # ---------------------
 
     status_simulado = (
         "Aprovado"

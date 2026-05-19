@@ -39,23 +39,30 @@ class SolicitacaoPagamento(BaseModel):
     valor_total: float = Field(..., description="Valor total da tansação financeira", gt=0)
     metodo_pagamento: str = Field(..., description="Forma de pagamento utilizada EX(: Cartao, Pix, Dinheiro)")
     
-
-    
-
 @app.post("/pagamentos", status_code=status.HTTP_201_CREATED, summary="Registrar e processar um pagamento")
-
 
 def processar_pagamento(pagamento:SolicitacaoPagamento) -> Dict[str, Any]:
     id_pedido = pagamento.id_pedido
     valor_total = pagamento.valor_total
     metodo_pagamento = pagamento.metodo_pagamento
     
+    # 2 implementação- Validação Customizada de Métodos de Pagamento para que a API rejeite qualquer requisição que 
+    # envie um método de pagamento diferente de "Pix", "Cartão" ou "Dinheiro", retornando o 
+    # código de erro HTTP adequado (400 Bad Request).
+    
+    metodos_validos = {'Pix', 'Cartão', 'Dinheiro' }
+    
+    if pagamento.metodo_pagamento not in metodos_validos:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="400 Bad request, esse método de pagamento não é aceito! "
+        )
+        
     # 1. Implementação da regra de Incentivo Financeiro (Desconto 10% no pagamento por Pix):
     if pagamento.metodo_pagamento.lower() == 'pix':
-        valor_total = valor_total - (0.10 * valor_total)   
+        valor_total = valor_total - (0.10 * valor_total)
         
         # ---------------------
-
     status_simulado = (
         "Aprovado"
         if metodo_pagamento.lower() =="dinheiro"
@@ -133,11 +140,4 @@ def consultar_pagamento(id_pedido:int) -> Dict[str, Any]:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro de comunicação com o a base de dados: {err}"
         )
-        
     
-
-    
-
-
-
-
